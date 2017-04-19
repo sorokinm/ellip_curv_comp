@@ -31,7 +31,8 @@ void add_to_arr(unsigned char* arr, int length, unsigned char b) {
 
 int main() {
     FILE* prime_f = NULL;
-    char current_prime[200] = {0};
+    char current_prime[1024] = {0};
+    char order_n[] = "0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF27E69532F48D89116FF22B8D4E0560609B4B38ABFAD2B85DCACDB1411F10B275";
     string prime_line;
     ifstream infile ("primes");
 
@@ -48,9 +49,10 @@ int main() {
     pari_init(100000000000, 10000000000);
 
 // creating prime object with string of prime number converted to C string
-    GEN prime = gp_read_str(prime_line.c_str());
+ //   GEN prime = gp_read_str(prime_line.c_str());
+    GEN prime = strtoi(prime_line.c_str());
 // void pari_fprintf(FILE *file, const char *fmt, ...) for logging to a file
-//pari_printf("%Ps\n", prime);
+pari_printf("%Ps\n", prime);
 
     // compute floor(log2(prime)); stoi(2) is required to convert int 2 to GEN object
     GEN t = gdivent(glog(prime, 5), glog(stoi(2), 5));
@@ -133,9 +135,11 @@ int main() {
         // go to the beginning
     }
 
+    GEN n = strtoi(order_n);
+
     GEN cardinality = Fp_ellcard_SEA(r,r,prime,0);
     pari_printf("cardinality = %Ps\n", cardinality);
-    //GEN curve = ellinit(const_vec(2,r),prime,5);
+
 
     return 0;
 }

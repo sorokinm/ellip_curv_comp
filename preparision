@@ -22,4 +22,7 @@ sudo ldconfig
 On my computer to compile program I enter:
 g++ -o curg curve_generate.cpp  -lcrypto -lc -lm -L/usr/local/lib -lpari
 
+check if a number is prime in bash
+openssl prime -checks 5 -hex <number>
+
 
