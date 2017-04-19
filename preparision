@@ -15,5 +15,11 @@ openssl prime -generate -bits 2048 -hex
 
 g++ -o curg curve_generate.cpp -lpari -lcrypto
 
+sudo ./Configure
+sudo make install
+sudo ldconfig
+
+On my computer to compile program I enter:
+g++ -o curg curve_generate.cpp  -lcrypto -lc -lm -L/usr/local/lib -lpari
 
 
