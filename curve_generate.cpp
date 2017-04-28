@@ -8,6 +8,8 @@
 #include <openssl/sha.h>
 #include <errno.h>
 
+#include <time.h>
+
 using namespace std;
 // for adding array which stands for number and number b
 void add_to_arr(unsigned char* arr, int length, unsigned char b) {
@@ -55,6 +57,7 @@ int main() {
 // void pari_fprintf(FILE *file, const char *fmt, ...) for logging to a file
     pari_printf("%Ps\n", prime);
 
+    clock_t start = clock();
     pari_sp av = avma; /* record initial avma */
     while(is_ok != 0) {
         avma = av;
@@ -160,7 +163,8 @@ int main() {
         }
         is_ok = 0;
     }
-
+    clock_t end = clock();
+    printf("Time = %f", (float)(end - start) / CLOCKS_PER_SEC);
     /*
     GEN ell5 = vectrunc_init(2);
     vectrunc_append(ell5,stoi(9));

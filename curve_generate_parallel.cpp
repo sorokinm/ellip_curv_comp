@@ -55,7 +55,6 @@ int main() {
     int numth = omp_get_max_threads();
 // initialisation of pari system
     pari_init(100000000000, 10000000000); //!!!
-
     if (numth > MAXTHREADS)
     {
         numth = MAXTHREADS;
@@ -64,119 +63,128 @@ int main() {
 
     /*Allocate pari thread structures */
     for (int i = 1; i < numth; i++) {
-        pari_thread_alloc(&pth[i],4000000,NULL);
+        pari_thread_alloc(&pth[i],400000,NULL);
     }
 
 // creating prime object with string of prime number converted to C string
     //   GEN prime = gp_read_str(prime_line.c_str());
     GEN prime = strtoi(prime_line.c_str());
 // void pari_fprintf(FILE *file, const char *fmt, ...) for logging to a file
-    pari_printf("%Ps\n", prime);
+    //pari_printf("%Ps\n", prime);
 
     pari_sp av = avma; /* record initial avma */
     while(is_ok != 0) {
         avma = av;
-        // compute floor(log2(prime)); stoi(2) is required to convert int 2 to GEN object
-        GEN t = gdivent(glog(prime, 5), glog(stoi(2), 5));
-        //pari_printf("%Ps\n", t);
+#pragma omp parallel
+        {
+            #pragma omp for
+            for (int ii = 0; ii < numth; ++ii) {
+                // compute floor(log2(prime)); stoi(2) is required to convert int 2 to GEN object
+                GEN t = gdivent(glog(prime, 5), glog(stoi(2), 5));
+                //pari_printf("%Ps\n", t);
 
-        // convert GEN t to long exp because t is not more than 512
-        int exp = (int) itos(t);
-        // this all is according to algorithm
-        int s = (exp - 1) / 160;
-        int v = exp - 160 * s;
+                // convert GEN t to long exp because t is not more than 512
+                int exp = (int) itos(t);
+                // this all is according to algorithm
+                int s = (exp - 1) / 160;
+                int v = exp - 160 * s;
 
-        srandom(time(NULL));
+                srandom(time(NULL));
 
-        // so now we have g == 176 (22 * 8 bit)
-        unsigned g = 176;
-        unsigned char seedE[22] = {0};
-        unsigned char sha_H[20] = {0};
-        for (int i = 0; i < 22; ++i) {
-            seedE[i] = (unsigned char) rand();
-        }
-        while (seedE[20] == 0) {
-            seedE[20] = (unsigned char) rand();
-        }
-        SHA1(seedE, 22, sha_H);
+                // so now we have g == 176 (22 * 8 bit)
+                unsigned g = 176;
+                unsigned char seedE[22] = {0};
+                unsigned char sha_H[20] = {0};
+                for (int i = 0; i < 22; ++i) {
+                    seedE[i] = (unsigned char) rand();
+                }
+                while (seedE[20] == 0) {
+                    seedE[20] = (unsigned char) rand();
+                }
+                SHA1(seedE, 22, sha_H);
 
-        int full_chars = v / 8;
-        int part_char = v % 8;
-        if (part_char != 0) {
-            sha_H[full_chars] = (sha_H[full_chars] << (8 - part_char)) >> (8 - part_char);
-        }
+                int full_chars = v / 8;
+                int part_char = v % 8;
+                if (part_char != 0) {
+                    sha_H[full_chars] = (sha_H[full_chars] << (8 - part_char)) >> (8 - part_char);
+                }
 /*
         // it is not required; probably should be commented
         for (int i = full_chars + 1; i < 22; ++i) {
             sha_H[i] = 0;
         }
 */
-        // replace the leftest significant bit in the result
-        if (part_char != 0) {
-            sha_H[full_chars] = (sha_H[full_chars] << (8 - part_char + 1)) >> (8 - part_char + 1);
-        } else {
-            sha_H[full_chars - 1] = sha_H[full_chars - 1] & 0x7f;
-        }
+                // replace the leftest significant bit in the result
+                if (part_char != 0) {
+                    sha_H[full_chars] = (sha_H[full_chars] << (8 - part_char + 1)) >> (8 - part_char + 1);
+                } else {
+                    sha_H[full_chars - 1] = sha_H[full_chars - 1] & 0x7f;
+                }
 
-        char result_r[20 * 4 * 2 + 3] = {0};
-        result_r[0] = '0';
-        result_r[1] = 'x';
+                char result_r[20 * 4 * 2 + 3] = {0};
+                result_r[0] = '0';
+                result_r[1] = 'x';
 
-        for (int i = full_chars; i >= 0; --i) {
-            // writes in buffer string hex + 00 !!!
-            sprintf(&result_r[2 + (full_chars - i) * 2], "%02X", sha_H[i]);
-        }
+                for (int i = full_chars; i >= 0; --i) {
+                    // writes in buffer string hex + 00 !!!
+                    sprintf(&result_r[2 + (full_chars - i) * 2], "%02X", sha_H[i]);
+                }
 
-        unsigned char WW[20 * 3] = {0};
-        unsigned char sha_WW[20] = {0};
-        for (int j = 1; j <= s; ++j) {
-            add_to_arr(sha_H, 20, 1);
-            SHA1(sha_H, 20, sha_WW);
+                unsigned char WW[20 * 3] = {0};
+                unsigned char sha_WW[20] = {0};
+                for (int j = 1; j <= s; ++j) {
+                    add_to_arr(sha_H, 20, 1);
+                    SHA1(sha_H, 20, sha_WW);
 
-            for (int i = 19; i >= 0; --i) {
-                // 2 + (full_chars + 1) * 2 + 40 * (j - 1) chars are already filled
-                sprintf(&result_r[2 + (full_chars + 1) * 2 + 40 * (j - 1) + (19 - i) * 2], "%02X", sha_WW[i]);
+                    for (int i = 19; i >= 0; --i) {
+                        // 2 + (full_chars + 1) * 2 + 40 * (j - 1) chars are already filled
+                        sprintf(&result_r[2 + (full_chars + 1) * 2 + 40 * (j - 1) + (19 - i) * 2], "%02X", sha_WW[i]);
+                    }
+                }
+                //printf("%s\n", result_r);
+
+                GEN r = strtoi(result_r);
+
+                if (mpcmp(r, stoi(0)) == 0 || mpcmp(gmod(addmulii(stoi(27), stoi(4), r), prime), stoi(0)) == 0) {
+                    is_ok = -1;
+                    continue;
+                }
+                GEN n = strtoi(order_n);
+
+                GEN cardinality = Fp_ellcard_SEA(r, r, prime, 0);
+
+                if (mpcmp(gmod(cardinality, n), stoi(0)) != 0) {
+                    printf("n does not divide the cardinality!\n");
+                    is_ok = -1;
+                    continue;
+                }
+                for (int k = 1; k < 21; ++k) {
+                    int is_error = 0;
+                    if (mpcmp(gmod(gsub(gpow(prime, stoi(k), 5), stoi(1)), n), stoi(0)) == 0) {
+                        printf("n devides p^%d - 1!\n", k);
+                        is_error = 1;
+                        break;
+                    }
+                    if (is_error) {
+                        is_ok = -1;
+                        continue;
+                    }
+                }
+
+                if (mpcmp(prime, n) == 0) {
+                    printf("Prime p equals n !\n");
+                    is_ok = -1;
+                    continue;
+                }
+                // critical section is required!!!
+                is_ok = 0;
+                pari_printf("cardinality = %Ps\n", cardinality);
+                pari_printf("a,b = %Ps\n", r);
+                pari_printf("p = %Ps\n", prime);
+                pari_printf("n = %Ps\n", n);
+
             }
         }
-        //printf("%s\n", result_r);
-
-        r = strtoi(result_r);
-        pari_printf("r = %Ps\n", r);
-        pari_printf("p = %Ps\n", prime);
-
-        if (mpcmp(r, stoi(0)) == 0 || mpcmp(gmod(addmulii(stoi(27), stoi(4), r), prime), stoi(0)) == 0) {
-            is_ok = -1;
-            continue;
-        }
-        GEN n = strtoi(order_n);
-
-        GEN cardinality = Fp_ellcard_SEA(r, r, prime, 0);
-        pari_printf("cardinality = %Ps\n", cardinality);
-
-        if (mpcmp(gmod(cardinality, n), stoi(0)) != 0) {
-            printf("n does not divide the cardinality!\n");
-            is_ok = -1;
-            continue;
-        }
-        for (int k = 1; k < 21; ++k) {
-            int is_error = 0;
-            if (mpcmp(gmod(gsub(gpow(prime, stoi(k), 5), stoi(1)), n), stoi(0)) == 0) {
-                printf("n devides p^%d - 1!\n", k);
-                is_error = 1;
-                break;
-            }
-            if(is_error) {
-                is_ok = -1;
-                continue;
-            }
-        }
-
-        if (mpcmp(prime, n) == 0) {
-            printf("Prime p equals n !\n");
-            is_ok = -1;
-            continue;
-        }
-        is_ok = 0;
     }
 
     /*
