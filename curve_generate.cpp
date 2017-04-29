@@ -35,7 +35,8 @@ int main() {
     FILE* prime_f = NULL;
     int is_ok = -1;
     char current_prime[1024] = {0};
-    char order_n[] = "0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF27E69532F48D89116FF22B8D4E0560609B4B38ABFAD2B85DCACDB1411F10B275";
+    char order_n[] = "139";//"0x196461B";
+            //"0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF27E69532F48D89116FF22B8D4E0560609B4B38ABFAD2B85DCACDB1411F10B275";
     string prime_line;
     ifstream infile ("primes");
 
@@ -55,7 +56,11 @@ int main() {
  //   GEN prime = gp_read_str(prime_line.c_str());
     GEN prime = strtoi(prime_line.c_str());
 // void pari_fprintf(FILE *file, const char *fmt, ...) for logging to a file
+#ifdef PRINT_INFO
     pari_printf("%Ps\n", prime);
+#endif
+    GEN cardinality;
+    GEN n;
 
     clock_t start = clock();
     pari_sp av = avma; /* record initial avma */
@@ -90,12 +95,12 @@ int main() {
         if (part_char != 0) {
             sha_H[full_chars] = (sha_H[full_chars] << (8 - part_char)) >> (8 - part_char);
         }
-/*
+
         // it is not required; probably should be commented
         for (int i = full_chars + 1; i < 22; ++i) {
             sha_H[i] = 0;
         }
-*/
+
         // replace the leftest significant bit in the result
         if (part_char != 0) {
             sha_H[full_chars] = (sha_H[full_chars] << (8 - part_char + 1)) >> (8 - part_char + 1);
@@ -106,7 +111,9 @@ int main() {
         char result_r[20 * 4 * 2 + 3] = {0};
         result_r[0] = '0';
         result_r[1] = 'x';
-
+#ifdef PRINT_INFO
+        printf("fullchars = %d\n", full_chars);
+#endif
         for (int i = full_chars; i >= 0; --i) {
             // writes in buffer string hex + 00 !!!
             sprintf(&result_r[2 + (full_chars - i) * 2], "%02X", sha_H[i]);
@@ -123,23 +130,30 @@ int main() {
                 sprintf(&result_r[2 + (full_chars + 1) * 2 + 40 * (j - 1) + (19 - i) * 2], "%02X", sha_WW[i]);
             }
         }
-        //printf("%s\n", result_r);
-
+#ifdef PRINT_INFO
+        printf("%s\n", result_r);
+#endif
         r = strtoi(result_r);
+#ifdef PRINT_INFO
         pari_printf("r = %Ps\n", r);
         pari_printf("p = %Ps\n", prime);
+#endif
 
         if (mpcmp(r, stoi(0)) == 0 || mpcmp(gmod(addmulii(stoi(27), stoi(4), r), prime), stoi(0)) == 0) {
             is_ok = -1;
             continue;
         }
-        GEN n = strtoi(order_n);
+        n = strtoi(order_n);
 
-        GEN cardinality = Fp_ellcard_SEA(r, r, prime, 0);
+        cardinality = Fp_ellcard_SEA(r, r, prime, 0);
+#ifdef PRINT_INFO
         pari_printf("cardinality = %Ps\n", cardinality);
+#endif
 
         if (mpcmp(gmod(cardinality, n), stoi(0)) != 0) {
+#ifdef PRINT_INFO
             printf("n does not divide the cardinality!\n");
+#endif
             is_ok = -1;
             continue;
         }
@@ -164,7 +178,21 @@ int main() {
         is_ok = 0;
     }
     clock_t end = clock();
-    printf("Time = %f", (float)(end - start) / CLOCKS_PER_SEC);
+    FILE* f = fopen("file.log", "a+");
+
+    pari_printf("r = %Ps\n", r);
+    pari_printf("p = %Ps\n", prime);
+    pari_printf("card = %Ps\n", cardinality);
+    pari_printf("n = %Ps\n", n);
+
+
+    pari_fprintf(f, "r = %Ps\n", r);
+    pari_fprintf(f, "p = %Ps\n", prime);
+    pari_fprintf(f, "card = %Ps\n", cardinality);
+    pari_fprintf(f, "n = %Ps\n", n);
+    fprintf(f, "Time = %f\n", (float)(end - start) / CLOCKS_PER_SEC);
+    printf("Time = %f\n", (float)(end - start) / CLOCKS_PER_SEC);
+    fclose(f);
     /*
     GEN ell5 = vectrunc_init(2);
     vectrunc_append(ell5,stoi(9));
