@@ -1,6 +1,6 @@
 #!/bin/bash
 
-times=8
+times=25
 echo "Start testing $times times"
 while [ $times -gt 0 ]
 do

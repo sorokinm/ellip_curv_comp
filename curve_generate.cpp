@@ -10,6 +10,8 @@
 
 #include <time.h>
 
+
+
 using namespace std;
 // for adding array which stands for number and number b
 void add_to_arr(unsigned char* arr, int length, unsigned char b) {
@@ -133,7 +135,7 @@ int main() {
 #ifdef PRINT_INFO
         printf("%s\n", result_r);
 #endif
-        r = strtoi(result_r);
+        r = gmod(strtoi(result_r), prime);
 #ifdef PRINT_INFO
         pari_printf("r = %Ps\n", r);
         pari_printf("p = %Ps\n", prime);
