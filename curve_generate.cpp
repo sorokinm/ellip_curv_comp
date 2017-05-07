@@ -10,7 +10,7 @@
 
 #include <time.h>
 
-
+#define PRINT_INFO
 
 using namespace std;
 // for adding array which stands for number and number b

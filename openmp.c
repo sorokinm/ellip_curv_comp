@@ -7,7 +7,7 @@
 int
 main(void)
 {
-  GEN M,N1,N2, F1,F2,D;
+  GEN M,N1,N2, F1,F2,D,cardinality;
   struct pari_thread pth[MAXTHREADS];
   int numth = omp_get_max_threads(), i;
   /* Initialise the main PARI stack and global objects (gen_0, etc.) */

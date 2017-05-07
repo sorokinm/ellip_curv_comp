@@ -31,4 +31,3 @@ g++ -o curg curve_generate_parallel.cpp  -lcrypto -lc -lm -L/usr/local/lib -lpar
 
 
 
-
