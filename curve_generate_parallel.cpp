@@ -48,7 +48,7 @@ int main(void)
     FILE* prime_f = NULL;
     int is_ok = -1;
     char current_prime[1024] = {0};
-    char order_n[] = "139";//"0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF27E69532F48D89116FF22B8D4E0560609B4B38ABFAD2B85DCACDB1411F10B275";
+    char order_n[] = "199";//"0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF27E69532F48D89116FF22B8D4E0560609B4B38ABFAD2B85DCACDB1411F10B275";
     string prime_line;
     ifstream infile ("primes");
 
@@ -76,14 +76,14 @@ int main(void)
 
     GEN prime = strtoi(prime_line.c_str());
 
-
+    clock_t start = clock();
 #pragma omp parallel
         {
             int this_th = omp_get_thread_num();
             if (this_th) (void) pari_thread_start(&pth[this_th]);
 
             while(is_ok != 0) {
-#pragma omp for
+//#pragma omp for
                 for (int ii = 0; ii < numth; ++ii) {
                     //pari_sp av = avma; /* record initial avma */
                     GEN t = gdivent(glog(prime, 5), glog(gp_read_str("2"), 5));
@@ -97,7 +97,7 @@ int main(void)
                     unsigned char seedE[22] = {0};
                     unsigned char sha_H[20] = {0};
                     for (int i = 0; i < 22; ++i) {
-                        seedE[i] = (unsigned char) rand();
+                        seedE[i] = (unsigned char) (rand() * (ii + 12));
                     }
                     while (seedE[20] == 0) {
                         seedE[20] = (unsigned char) rand();
@@ -145,7 +145,7 @@ int main(void)
                     BIGNUM *big_r = BN_new();
                     BN_hex2bn(&big_r, (const char *)result_r + 2);
                     char* r_dec = BN_bn2dec(big_r);
-                    //printf("%s\n", result_r);
+                    //printf("th=%d r=%s\n", omp_get_thread_num(), r_dec);
                     BN_free(big_r);
 
                     GEN r = strtoi(r_dec);
@@ -164,7 +164,7 @@ int main(void)
                     //pari_printf("card=%Ps\n", cardinality);
                     //pari_printf("n=%Ps\n", n);
                     if (cmpii(gmod(cardinality, n), gp_read_str("0")) != 0) {
-                        printf("n does not divide the cardinality!\n");
+                        //printf("n does not divide the cardinality!\n");
                         is_ok = -1;
                         //avma = av;
                         continue;
@@ -174,7 +174,7 @@ int main(void)
                     for (int k = 1; k < 21; ++k) {
                         int is_error = 0;
                         if (cmpii(gmod(gsub(gpow(prime, gp_read_str(to_string(k).c_str()), 5), gp_read_str("1")), n), gp_read_str("0")) == 0) {
-                            printf("n devides p^%d - 1!\n", k);
+                            //printf("n devides p^%d - 1!\n", k);
                             is_error = 1;
                             break;
                         }
@@ -190,12 +190,23 @@ int main(void)
                         //avma = av;
                         continue;
                     }
-                    // critical section is required!!!
                     is_ok = 0;
+                    clock_t end = clock();
+                    printf("from ii = %d\n",ii);
+                    printf("Time = %f\n", (float) (end - start) / CLOCKS_PER_SEC);
                     pari_printf("cardinality = %Ps\n", cardinality);
                     pari_printf("a,b = %Ps\n", r);
                     pari_printf("p = %Ps\n", prime);
                     pari_printf("n = %Ps\n", n);
+
+                    FILE* f = fopen("file_parallel199.log", "a+");
+                    //pari_fprintf(f, "r = %Ps\n", r);
+                    //pari_fprintf(f, "p = %Ps\n", prime);
+                    //pari_fprintf(f, "card = %Ps\n", cardinality);
+                    //pari_fprintf(f, "n = %Ps\n", n);
+                    fprintf(f, "Time = %f\n", (float)(end - start) / CLOCKS_PER_SEC);
+                    fclose(f);
+
                     //avma = av;
                 }
         }
@@ -207,5 +218,6 @@ int main(void)
             pari_thread_free(&pth[i]);
         }
     }/* omp parallel */
+
     return 0;
 }

@@ -28,6 +28,7 @@ openssl prime -checks 5 -hex <number>
 compile with pari and openmp
 
 g++ -o curg curve_generate_parallel.cpp  -lcrypto -lc -lm -L/usr/local/lib -lpari -fopenmp
+g++ -o curg curve_generate_parallel.cpp  -lcrypto -lpari -fopenmp
 
 
 

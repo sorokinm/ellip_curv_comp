@@ -10,7 +10,6 @@
 
 #include <time.h>
 
-#define PRINT_INFO
 
 using namespace std;
 // for adding array which stands for number and number b
@@ -37,7 +36,7 @@ int main() {
     FILE* prime_f = NULL;
     int is_ok = -1;
     char current_prime[1024] = {0};
-    char order_n[] = "139";//"0x196461B";
+    char order_n[] = "211";//"0x196461B";
             //"0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF27E69532F48D89116FF22B8D4E0560609B4B38ABFAD2B85DCACDB1411F10B275";
     string prime_line;
     ifstream infile ("primes");
@@ -180,7 +179,7 @@ int main() {
         is_ok = 0;
     }
     clock_t end = clock();
-    FILE* f = fopen("file.log", "a+");
+    FILE* f = fopen("file211.log", "a+");
 
     pari_printf("r = %Ps\n", r);
     pari_printf("p = %Ps\n", prime);
@@ -188,21 +187,13 @@ int main() {
     pari_printf("n = %Ps\n", n);
 
 
-    pari_fprintf(f, "r = %Ps\n", r);
-    pari_fprintf(f, "p = %Ps\n", prime);
-    pari_fprintf(f, "card = %Ps\n", cardinality);
-    pari_fprintf(f, "n = %Ps\n", n);
+    //pari_fprintf(f, "r = %Ps\n", r);
+    //pari_fprintf(f, "p = %Ps\n", prime);
+    //pari_fprintf(f, "card = %Ps\n", cardinality);
+    //pari_fprintf(f, "n = %Ps\n", n);
     fprintf(f, "Time = %f\n", (float)(end - start) / CLOCKS_PER_SEC);
     printf("Time = %f\n", (float)(end - start) / CLOCKS_PER_SEC);
     fclose(f);
-    /*
-    GEN ell5 = vectrunc_init(2);
-    vectrunc_append(ell5,stoi(9));
-    vectrunc_append(ell5,stoi(89));
-    pari_printf("%Ps\n", ell5);
-    GEN curve = ellinit(ell5,prime,5);
-    pari_printf("%Ps\n", curve);
-    */
 
     return 0;
 }
