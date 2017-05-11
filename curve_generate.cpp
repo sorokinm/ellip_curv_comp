@@ -36,7 +36,7 @@ int main() {
     FILE* prime_f = NULL;
     int is_ok = -1;
     char current_prime[1024] = {0};
-    char order_n[] = "211";//"0x196461B";
+    char order_n[] = "503";//"0x196461B";
             //"0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF27E69532F48D89116FF22B8D4E0560609B4B38ABFAD2B85DCACDB1411F10B275";
     string prime_line;
     ifstream infile ("primes");
@@ -158,17 +158,17 @@ int main() {
             is_ok = -1;
             continue;
         }
+        int is_error = 0;
         for (int k = 1; k < 21; ++k) {
-            int is_error = 0;
+            is_error = 0;
             if (mpcmp(gmod(gsub(gpow(prime, stoi(k), 5), stoi(1)), n), stoi(0)) == 0) {
                 printf("n devides p^%d - 1!\n", k);
                 is_error = 1;
                 break;
             }
-            if(is_error) {
-                is_ok = -1;
-                continue;
-            }
+        }
+        if(is_error) {
+            continue;
         }
 
         if (mpcmp(prime, n) == 0) {
@@ -179,7 +179,7 @@ int main() {
         is_ok = 0;
     }
     clock_t end = clock();
-    FILE* f = fopen("file211.log", "a+");
+    FILE* f = fopen("file503.log", "a+");
 
     pari_printf("r = %Ps\n", r);
     pari_printf("p = %Ps\n", prime);
